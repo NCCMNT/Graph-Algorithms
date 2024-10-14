@@ -2,7 +2,7 @@ from queue import PriorityQueue
 
 INF = float('inf')
 
-def Dijkstra(G, start):
+def Dijkstra(G, start = 0):
     n = len(G)
     distances = [-INF for _ in range(n)]
     distances[start] = 0
@@ -26,7 +26,7 @@ def Dijkstra(G, start):
     parent[0] = None
     return parent, distances
 
-def getSolution(G,start):
+def getSolution(G,start = 0):
     parent, distances = Dijkstra(G,start)
     par = parent[1]
     res = distances[1]
@@ -34,3 +34,6 @@ def getSolution(G,start):
         res = min(res,distances[par])
         par = parent[par]
     return res
+
+from tester import run_tests
+run_tests(r'graphs-lab1', getSolution)
