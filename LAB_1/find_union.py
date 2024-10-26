@@ -40,24 +40,32 @@ def kruskal(G):
     result.pop(0)
     return result
 
-def DFS(G, s, t, visited, path):
-    if s == t: return path
-    visited.add(s)
-    for v, cost in G[s]:
-        if v not in visited:
-            result = DFS(G, v, t, visited, path + [(s,v,cost)])
-            if result: return result
+def DFS_iterative(G, s, t):
+    stack = [(s, [])]  # Stack holds tuples of (current node, path to current node)
+    visited = set()
+    
+    while stack:
+        u, path = stack.pop()
+        if u == t:
+            return path  # Return the path when destination is reached
+        if u not in visited:
+            visited.add(u)
+            for v, cost in G[u]:
+                if v not in visited:
+                    # Append the new edge to the path
+                    stack.append((v, path + [(u, v, cost)]))
+    
     return None
 
 def printSolution(G):
-    V, E = G
     max_spanning_tree = kruskal(G)
-    # print(max_spanning_tree)
-    visited = set()
-    path = DFS(max_spanning_tree, 0, 1, visited, [])
+    path = DFS_iterative(max_spanning_tree, 0, 1)
+
+    if path is None:
+        return None
     result = min(edge[2] for edge in path)
     return result
 
 
 from tester import run_tests
-run_tests(r'graphs-lab1', printSolution, 'set', runall=True, without=['pp1000','path10000', 'path1000'])
+run_tests(r'graphs-lab1', printSolution, 'set', runall=True)
