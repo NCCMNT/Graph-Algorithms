@@ -7,10 +7,13 @@ def DFS(G, parent, s ,t):
 
     def DFSvisit(G,parent,u):
         nonlocal visited, t
+
         if u == t: return True
+
         visited[u] = True
         for v, cost in G[u]:
-            if not visited[v]:
+            if not visited[v] and cost != 0:
+                visited[v] = True
                 parent[v] = u
                 DFSvisit(G,parent,v)
 
@@ -84,8 +87,8 @@ def fordFulkerson(G, s, t, traversal):
 
     return max_flow
 
-def printSolution(G, s = 0, t = 1, traversal = BFS):
+def printSolution(G, s = 0, t = 1, traversal = DFS):
     return fordFulkerson(G,s,t, traversal)
 
 from tester_2 import run_tests
-run_tests(r'graphs-lab2/flow', printSolution, runall=True)
+run_tests(r'graphs-lab2/flow', printSolution, runall=False)
