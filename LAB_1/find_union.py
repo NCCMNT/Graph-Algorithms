@@ -67,5 +67,5 @@ def printSolution(G):
     return result
 
 
-from tester import run_tests
+from tester_1 import run_tests
 run_tests(r'graphs-lab1', printSolution, 'set', runall=True)

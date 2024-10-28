@@ -35,5 +35,5 @@ def getSolution(G,start = 0):
         par = parent[par]
     return res
 
-from tester import run_tests
+from tester_1 import run_tests
 run_tests(r'graphs-lab1', getSolution)
