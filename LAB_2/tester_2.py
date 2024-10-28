@@ -9,12 +9,11 @@ def run_tests(directory, function, graph_converter = 'list', runall = True, with
     start_time = time.monotonic()
     for graph in os.listdir(directory):
         
-        if (not runall and graph != 'g1') or graph in without: continue
+        if (not runall and graph != 'trivial') or graph in without: continue
 
         with open(os.path.join(directory, graph)) as f:
             print(f"TESTING GRAPH: {graph}")
-            V,L = loadWeightedGraph(f"graphs-lab1/{graph}")
-
+            V,L = loadDirectedWeightedGraph(f"{directory}/{graph}")
             match graph_converter:
                 case 'set':
                     G = (V,L)
@@ -27,11 +26,11 @@ def run_tests(directory, function, graph_converter = 'list', runall = True, with
                         u -= 1
                         v -= 1
                         G[u].append((v,c))
-                        G[v].append((u,c))
+                        #G[v].append((u,c))
                 
-            read_sol = readSolution(f"graphs-lab1/{graph}")
+            read_sol = readSolution(f"{directory}/{graph}")
 
-        my_sol = function(G)
+        my_sol = function(G, 0, V-1)
 
         print(f"Expected result: {read_sol}")
         print(f"Given result: {my_sol}")
