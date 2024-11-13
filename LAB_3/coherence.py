@@ -1,27 +1,5 @@
 from collections import deque
 
-def DFS(G, parent, s ,t):
-    n = len(G)
-    visited = [False for _ in range(n)]
-    visited[s] = True
-
-    def DFSvisit(G,parent,u):
-        nonlocal visited, t
-
-        if u == t: return True
-
-        visited[u] = True
-        for v, cost in G[u]:
-            if not visited[v] and cost != 0:
-                visited[v] = True
-                parent[v] = u
-                DFSvisit(G,parent,v)
-
-    for u in range(n):
-        if not visited[u]:
-            if DFSvisit(G,parent,u): return True
-    return False
-
 def BFS(G, parent, s, t):
     n = len(G)
     Q = deque()
@@ -90,5 +68,5 @@ def fordFulkerson(G, s, t, traversal):
 def printSolution(G, s = 0, t = 1, traversal = BFS):
     return fordFulkerson(G,s,t, traversal)
 
-from tester_2 import run_tests
-run_tests(r'graphs-lab2/flow', printSolution, runall=True)
+from tester_3 import run_tests
+run_tests(r'graphs-lab3', printSolution, runall=True)
