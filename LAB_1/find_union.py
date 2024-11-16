@@ -1,3 +1,5 @@
+from tests.tester import run_tests
+
 class Node:
     def __init__(self, value):
         self.val = value
@@ -67,5 +69,5 @@ def printSolution(G):
     return result
 
 
-from tester_1 import run_tests
-run_tests(r'graphs-lab1', printSolution, 'set', runall=True)
+
+run_tests(1, printSolution, graph_converter = 'set')

@@ -1,4 +1,5 @@
 from queue import PriorityQueue
+from tests.tester import run_tests
 
 INF = float('inf')
 
@@ -35,5 +36,4 @@ def getSolution(G,start = 0):
         par = parent[par]
     return res
 
-from tester_1 import run_tests
-run_tests(r'graphs-lab1', getSolution)
+run_tests(1, getSolution)

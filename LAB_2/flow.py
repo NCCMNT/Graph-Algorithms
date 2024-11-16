@@ -1,4 +1,5 @@
 from collections import deque
+from tests.tester import run_tests
 
 def DFS(G, parent, s ,t):
     n = len(G)
@@ -76,7 +77,6 @@ def residualPath(G, parent, v):
 
     return bottle_neck
 
-
 def fordFulkerson(G, s, t, traversal):
     n = len(G)
     max_flow = 0
@@ -88,7 +88,8 @@ def fordFulkerson(G, s, t, traversal):
     return max_flow
 
 def printSolution(G, s = 0, t = 1, traversal = BFS):
+    t = len(G) - 1
     return fordFulkerson(G,s,t, traversal)
 
-from tester_2 import run_tests
-run_tests(r'graphs-lab2/flow', printSolution, runall=True)
+
+run_tests(2, printSolution, subdir='flow', directed=True, graph_converter='dirlist')

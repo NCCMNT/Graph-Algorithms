@@ -1,4 +1,6 @@
 from collections import deque
+from tests.tester import run_tests
+from copy import deepcopy
 
 def BFS(G, parent, s, t):
     n = len(G)
@@ -66,7 +68,12 @@ def fordFulkerson(G, s, t, traversal):
     return max_flow
 
 def printSolution(G, s = 0, t = 1, traversal = BFS):
-    return fordFulkerson(G,s,t, traversal)
+    mini = float('inf')
+    V = len(G)
+    for s in range(V):
+        for t in range(s+1,V):
+            T = deepcopy(G)
+            mini = min(mini, fordFulkerson(T,s,t,traversal))
+    return mini
 
-from tester_3 import run_tests
-run_tests(r'graphs-lab3', printSolution, runall=True)
+run_tests(3, printSolution)
