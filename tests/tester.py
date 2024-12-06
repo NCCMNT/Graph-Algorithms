@@ -43,6 +43,8 @@ def run_tests(test_num, function, directed = False, graph_converter = 'list', ru
                         u -= 1
                         v -= 1
                         G[u].append((v,c))
+                case 'raw' :
+                    G = (V,L)
                 
             read_sol = readSolution(file_path)
 

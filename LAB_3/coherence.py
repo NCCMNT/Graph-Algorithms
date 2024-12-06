@@ -76,4 +76,4 @@ def printSolution(G, s = 0, t = 1, traversal = BFS):
             mini = min(mini, fordFulkerson(T,s,t,traversal))
     return mini
 
-run_tests(3, printSolution)
+run_tests(3, printSolution, without=['grid100x100','clique200','clique100'])

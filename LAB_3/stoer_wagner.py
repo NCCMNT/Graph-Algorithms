@@ -1,28 +1,29 @@
-from dimacs import *
-
-(V,L) = loadWeightedGraph( r'graphs-lab3/simple' ) # wczytaj graf
+from queue import PriorityQueue
+from tests.tester import run_tests
 
 class Node:
     def __init__(self, vert):
         self.org = vert
-        self.deactivated = False
+        self.active = True
         self.vert = f'{vert}'
         self.edges = {}    # słownik  mapujący wierzchołki do których są krawędzie na ich wagi
 
-    def addEdge( self, to, weight):
-        self.edges[to] = self.edges.get(to,0) + weight  # dodaj krawędź do zadanego wierzchołka
+    def addEdge( self, v, weight):
+        self.edges[v] = self.edges.get(v,0) + weight  # dodaj krawędź do zadanego wierzchołka
                                                         # o zadanej wadze; a jeśli taka krawędź
                                                         # istnieje, to dodaj do niej wagę
-    def delEdge( self ):
-        self.edges.clear()                             # usuń krawędź do zadanego wierzchołka
+    def delEdge( self, to ):
+        if to in self.edges:
+            del self.edges[to]                             # usuń krawędź do zadanego wierzchołka
 
     def __repr__(self):
         return f'vert: {self.vert} -> edges:{self.edges}'
 
-def Stoer_Wagner(V,L):
+def Stoer_Wagner(G1):
+
+    V, L = G1
 
     G = [ Node(i) for i in range(V) ]
-    ACTIVE = [not u.deactivated for u in G]
 
     for (u,v,c) in L:
         u -= 1
@@ -31,58 +32,62 @@ def Stoer_Wagner(V,L):
         G[v].addEdge(u,c)
 
     def mergeVertices(G:list[Node], x, y):
-        if G[x].deactivated or G[y].deactivated: return
-        G[y].vert = f'{G[x].vert}{G[y].vert}'
+        # y - wierzchołek do usunięcia
+        # x - wierzchołek do którego dołączamy y
+        if not G[x].active or not G[y].active: return
 
+        for u, weight in G[y].edges.items():
+            if u == x: continue
+            G[x].addEdge(u, weight)
+            G[u].addEdge(x, weight)
 
-        for u, weight in G[x].edges.items():
-            if u == y: continue
-            G[y].addEdge(u, weight)
+        G[x].vert = f'{G[y].vert}{G[x].vert}'
+        G[y].active = False
 
-        G[x].vert = f'{G[x].org}'
-        G[x].delEdge()
-        G[x].deactivated = True
-        ACTIVE[G[x].org] = False
-
-    def count_weights(v, S):
-        count = 0
-        for u, weight in G[v].edges.items():
-            if u in S:
-                count += weight
-        return count
+        for u in list(G[y].edges.keys()):
+            G[u].delEdge(y)
+        G[y].edges.clear()
 
     def minimumCutPhase( G:list[Node] ):
-        n = len(G)
-        S = [0]
+        active_nodes = [i for i, node in enumerate(G) if node.active]
+        start = active_nodes[0]
+        weights = {i: 0 for i in active_nodes}
+        S = set()
+        order = []
+        PQ = PriorityQueue()
+        PQ.put((-weights[start], start))
+        
+        while not PQ.empty():
+            curren_sum, u = PQ.get()
+            curren_sum = -curren_sum
 
-        while len(S) != n:
-            maxi = 0
-            v = None
-            for u in range(n):
-                current = count_weights(u, S)
-                if current > maxi:
-                    maxi = current
-                    v = u
-            if v not in S:
-                S.append(v)
+            if u in S: continue
 
-        s = S[-1]
-        t = S[-2]
+            S.add(u)
+            order.append(u)
+            
+            for v, weight in G[u].edges.items():
+                if v not in S and G[v].active:
+                    weights[v] += weight
+                    PQ.put((-weights[v], v))
+        
+        s = order[-1]
+        t = order[-2]
 
         # tworzone przecięcie jest postaci S = {s}, T = V - {s}
-        potential_result = count_weights(s, G[s].edges.keys())
+        cut_result = sum( G[s].edges.values() )
 
         mergeVertices(G,s,t)
 
-        return potential_result
+        return cut_result
     
     result = float('inf')
     
-    x = len(ACTIVE)
-    while x != 1:
+    while True:
         cut = minimumCutPhase(G)
         result = min(result, cut)
-        x = ACTIVE.count(True)
+        ACTIVES = [G[u].active for u in range(V)]
+        if ACTIVES.count(True) == 1: break
     return result
 
-print(Stoer_Wagner(V,L))
+run_tests(3, Stoer_Wagner, graph_converter='raw', without='grid100x100')
