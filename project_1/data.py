@@ -1,4 +1,5 @@
 from testy import *
+import os
 
 def read_problem(path):
   """
@@ -261,7 +262,9 @@ graph_files = [
   "random-sparse-large",
 ]
 
-problems += [read_problem(f"graphs/{name}") for name in graph_files]
+directory = rf'{os.path.dirname(os.path.abspath(__file__))}'
+
+problems += [read_problem(f"{directory}/graphs/{name}") for name in graph_files]
 
 def printarg(N, roads, lords):
     print(f"{N} miejsc, {len(roads)} drog, {len(lords)} lordow")
