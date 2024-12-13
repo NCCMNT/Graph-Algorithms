@@ -103,23 +103,66 @@ def solve(N, streets, lords):
         lord_castles = get_vertices(lord_road)
         all_lords_roads.append((lord_road, lord_strength, lord_castles))
 
+    all_lords_roads.sort(key = lambda x: x[1], reverse = True)
+
+    conflicts_graph = dict([(i,[]) for i in range(n)])
+    for i in range(n):
+        for j in range(n):
+            if i == j: continue
+            edges_a, _, vertices_a = all_lords_roads[i]
+            edges_b, _, vertices_b = all_lords_roads[j]
+            if (edges_a & edges_b != set()) or (vertices_a & vertices_b != set()):
+                conflicts_graph[i].append(j)
+
+    # Maximum Independent Set (MIS) approximation
+    visited = set()
+    selected_lords = set()
     result = 0
-    max_mask = 2**n
-    for mask in range(1,max_mask):
-        i = 0
-        considered_set = set()
-        potential_result = 0
-        while i < n:
-            _, cuurent_strength, current_set = all_lords_roads[i]
-            if mask % 2 == 1:
-                if considered_set & current_set == set():
-                    considered_set |= current_set
-                    potential_result += cuurent_strength
-                else: break
-            mask //= 2
-            i += 1
-        result = max(result, potential_result)
+
+    for lord_idx, (_, strength, _) in enumerate(all_lords_roads):
+        if lord_idx not in visited:
+            selected_lords.add(lord_idx)
+            result += strength
+            visited.update(conflicts_graph[lord_idx])
 
     return result
 
+# A = solve(6,[
+#     (1, 2, 4),
+#     (2, 3, 5),
+#     (3, 4, 6),
+#     (4, 5, 8),
+#     (5, 6, 7),
+#     (1, 6, 9),
+#     (2, 5, 10),
+#   ],[
+#     [1, 3],
+#     [2, 5],
+#     [4, 6],
+#   ])
+# print(A)
+# A = solve(4, [
+#   (1, 2, 2),
+#   (2, 3, 3),
+#   (2, 4, 5),
+#   ],
+#   [
+#     [1, 3, 4],
+#   ])
+
+# A = solve(6, [
+#     (1, 2, 4),
+#     (2, 3, 5),
+#     (3, 4, 6),
+#     (4, 5, 8),
+#     (5, 6, 7),
+#     (1, 6, 9),
+#     (2, 5, 10),
+#   ],
+#   [
+#     [1, 3],
+#     [2, 5],
+#     [4, 6],
+#   ])
+# print(A)
 runtests(solve)
