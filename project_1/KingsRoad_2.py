@@ -89,6 +89,53 @@ def get_vertices(S):
     result = set(map(lambda e: e[0], S)) | set(map(lambda e: e[1], S))
     return result
 
+class Lord:
+  def __init__(self, idx):
+    self.idx = idx
+    self.out = set()
+
+  def connect_to(self, v):
+    self.out.add(v)
+
+def make_graph_of_lords(V,L):
+    G = [None] + [Lord(i) for i in range(1, V+1)]
+    for (u, v) in L:
+        G[u].connect_to(v)
+        G[v].connect_to(u)
+    return G
+
+from collections import defaultdict
+
+def edge_list_to_adjacency_list(edges):
+    adjacency_list = defaultdict(set)
+    for u, v in edges:
+        adjacency_list[u].add(v)
+        adjacency_list[v].add(u)
+    return adjacency_list
+
+def bron_kerbosch(R, P, X, adjacency_list, cliques):
+    if not P and not X:  # Warunek zakończenia - znaleźliśmy klikę
+        cliques.append(R)
+        return
+    
+    for v in list(P):
+        bron_kerbosch(
+            R | {v}, 
+            P & adjacency_list[v], 
+            X & adjacency_list[v], 
+            adjacency_list, 
+            cliques
+        )
+        P.remove(v)
+        X.add(v)
+
+def find_maximum_cliques(edges):
+    adjacency_list = edge_list_to_adjacency_list(edges)
+    cliques = []
+    bron_kerbosch(set(), set(adjacency_list.keys()), set(), adjacency_list, cliques)
+    max_size = max(len(clique) for clique in cliques)
+    return [clique for clique in cliques if len(clique) == max_size]
+
 def solve(N, streets, lords):
     G = (N,streets)
     kingsroad = kruskal(G)
@@ -103,28 +150,29 @@ def solve(N, streets, lords):
         lord_castles = get_vertices(lord_road)
         all_lords_roads.append((lord_road, lord_strength, lord_castles))
 
+    if n == 1: return all_lords_roads[0][1]
     all_lords_roads.sort(key = lambda x: x[1], reverse = True)
 
-    conflicts_graph = dict([(i,[]) for i in range(n)])
+    L = set()
     for i in range(n):
         for j in range(n):
             if i == j: continue
             edges_a, _, vertices_a = all_lords_roads[i]
-            edges_b, _, vertices_b = all_lords_roads[j]
-            if (edges_a & edges_b != set()) or (vertices_a & vertices_b != set()):
-                conflicts_graph[i].append(j)
+            edges_b, _, vertices_b  = all_lords_roads[j]
+            if (edges_a & edges_b == set()) and (vertices_a & vertices_b == set()):
+                L.add((min(i, j), max(i, j)))
 
-    # Maximum Independent Set (MIS) approximation
-    visited = set()
-    selected_lords = set()
+    anticollision_graph = list(L)
+
+    cliques = find_maximum_cliques(anticollision_graph)
+
     result = 0
-
-    for lord_idx, (_, strength, _) in enumerate(all_lords_roads):
-        if lord_idx not in visited:
-            selected_lords.add(lord_idx)
-            result += strength
-            visited.update(conflicts_graph[lord_idx])
-
+    for clique in cliques:
+        pres = 0
+        list_of_lords = list(clique)
+        for i in list_of_lords:
+            pres += all_lords_roads[i][1]
+        result = max(result, pres)
     return result
 
 # A = solve(6,[
@@ -150,19 +198,43 @@ def solve(N, streets, lords):
 #     [1, 3, 4],
 #   ])
 
-# A = solve(6, [
-#     (1, 2, 4),
-#     (2, 3, 5),
-#     (3, 4, 6),
-#     (4, 5, 8),
-#     (5, 6, 7),
-#     (1, 6, 9),
-#     (2, 5, 10),
+# A = solve(4, [
+#   (1, 2, 5),
+#   (2, 3, 4),
+#   (3, 4, 6),
+#   ],
+#   [
+#     [1, 2],
+#     [3, 4],
+#   ])
+# print(A)
+
+# A = solve(12, [
+#     (1, 2, 21),
+#     (2, 3, 23),
+#     (3, 4, 22),
+#     (4, 5, 25),
+#     (3, 5, 29),
+#     (5, 7, 26),
+#     (7, 8, 22),
+#     (8, 9, 18),
+#     (4, 6, 24),
+#     (3, 6, 27),
+#     (6, 10, 19),
+#     (10, 11, 20),
+#     (11, 12, 21),
+#     (5, 6, 29),
+#     (7, 10, 30),
+#     (8, 11, 31),
+#     (9, 12, 32),
 #   ],
 #   [
 #     [1, 3],
-#     [2, 5],
-#     [4, 6],
+#     [2, 4],
+#     [5, 11],
+#     [6, 8],
+#     [7, 9],
+#     [10, 12],
 #   ])
 # print(A)
 runtests(solve)
