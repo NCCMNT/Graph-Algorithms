@@ -89,52 +89,84 @@ def get_vertices(S):
     result = set(map(lambda e: e[0], S)) | set(map(lambda e: e[1], S))
     return result
 
-class Lord:
-  def __init__(self, idx):
+class Lord_Node:
+  def __init__(self, idx, strength):
     self.idx = idx
+    self.strength = strength
     self.out = set()
+    self.color = None
 
   def connect_to(self, v):
     self.out.add(v)
 
-def make_graph_of_lords(V,L):
-    G = [None] + [Lord(i) for i in range(1, V+1)]
-    for (u, v) in L:
-        G[u].connect_to(v)
-        G[v].connect_to(u)
+def make_graph_of_lords(V, L:dict[int, set], lords_roads):
+    G = [None] + [Lord_Node(i, lords_roads[i].strength) for i in range(1, V+1)]
+
+    for lord_num, lord_neighbours in L.items():
+        G[lord_num].out = lord_neighbours
+
     return G
 
-from collections import defaultdict
+def LexBFS(G,n):
+    # n = len(G)
+    lex_order = []
+    S = [set()]
 
-def edge_list_to_adjacency_list(edges):
-    adjacency_list = defaultdict(set)
-    for u, v in edges:
-        adjacency_list[u].add(v)
-        adjacency_list[v].add(u)
-    return adjacency_list
-
-def bron_kerbosch(R, P, X, adjacency_list, cliques):
-    if not P and not X:  # Warunek zakończenia - znaleźliśmy klikę
-        cliques.append(R)
-        return
+    for u in range(1,n):
+        S[0].add(u)
     
-    for v in list(P):
-        bron_kerbosch(
-            R | {v}, 
-            P & adjacency_list[v], 
-            X & adjacency_list[v], 
-            adjacency_list, 
-            cliques
-        )
-        P.remove(v)
-        X.add(v)
+    def divide_sets(S:list[set], vertex:Lord, G:list[Lord]):
+        n = len(S)
+        
+        for i in range(n):
+            current_set = S[i]
+            
+            N = G[vertex].out
 
-def find_maximum_cliques(edges):
-    adjacency_list = edge_list_to_adjacency_list(edges)
-    cliques = []
-    bron_kerbosch(set(), set(adjacency_list.keys()), set(), adjacency_list, cliques)
-    max_size = max(len(clique) for clique in cliques)
-    return [clique for clique in cliques if len(clique) == max_size]
+            X = current_set.difference(N)
+            Y = current_set.intersection(N)
+            
+            if bool(X) and bool(Y):
+                S[i] = X
+                S.insert(i+1, Y)
+            elif bool(X) and (not bool(Y)): S[i] = X
+            elif (not bool(X)) and bool(Y): S[i] = Y
+    
+    while S:
+        u = S[-1].pop()
+        lex_order.append(u)
+        divide_sets(S, u, G)
+        if not bool(S[-1]): S.pop()
+    
+    return lex_order
+
+class Lord:
+    def __init__(self, id, castles, road, strength):
+        self.castles = castles
+        self.id = id
+        self.road = road
+        self.strength = strength
+        self.color = None
+        self.out = set()
+
+# sys.setrecursionlimit(10_000)
+
+class POECheck:
+    def __init__(self, lexOrder: list, graph: dict[int, Lord]):
+        self.lexOrder = lexOrder
+        self.lexSmallerNeighbors = {graph[lexOrder[0]] : set()}
+        self.parents = {graph[lexOrder[0]] : graph[lexOrder[0]]}
+
+        visitedSet = {graph[lexOrder[0]]}
+
+        n = len(lexOrder)
+
+        for idx in range(1, n):
+            vertex = graph[lexOrder[idx]]
+
+            self.lexSmallerNeighbors[vertex] = visitedSet & vertex.out
+
+            visitedSet.add(vertex)
 
 def solve(N, streets, lords):
     G = (N,streets)
@@ -142,38 +174,71 @@ def solve(N, streets, lords):
     KR = make_graph(N, kingsroad)
     
     n = len(lords)
-    all_lords_roads = []
+    all_lords = {}
     for i in range(n):
         lord = lords[i]
         lord_road = find_lords_road(lord,KR)
         lord_strength = sum_strength(lord_road)
         lord_castles = get_vertices(lord_road)
-        all_lords_roads.append((lord_road, lord_strength, lord_castles))
+        all_lords[i+1] = Lord(i+1,lord_castles, lord_road, lord_strength)
 
-    if n == 1: return all_lords_roads[0][1]
-    all_lords_roads.sort(key = lambda x: x[1], reverse = True)
-
-    L = set()
-    for i in range(n):
-        for j in range(n):
+    for i in range(1,n+1):
+        for j in range(1,n+1):
             if i == j: continue
-            edges_a, _, vertices_a = all_lords_roads[i]
-            edges_b, _, vertices_b  = all_lords_roads[j]
-            if (edges_a & edges_b == set()) and (vertices_a & vertices_b == set()):
-                L.add((min(i, j), max(i, j)))
+            edges_a, vertices_a = all_lords[i].road, all_lords[i].castles
+            edges_b, vertices_b  = all_lords[j].road, all_lords[j].castles
+            if (edges_a & edges_b != set()) or (vertices_a & vertices_b != set()):
+                all_lords[i].out.add(all_lords[j])
+                all_lords[j].out.add(all_lords[i])
 
-    anticollision_graph = list(L)
+    order = LexBFS(all_lords, n+1)[::-1]
 
-    cliques = find_maximum_cliques(anticollision_graph)
+    RED, BLUE = 0, 1
+    weights = {key : value.strength for key, value in all_lords.items()}
+
+    # poe = POECheck(order, all_lords)
+
+    for i in range(n):
+        lord_i = order[i]
+        if weights[lord_i] <= 0:
+            weights[lord_i] = 0
+            continue
+
+        xi = all_lords[lord_i]
+        xi.color = RED
+
+        for j in range(i+1,n): # poe.lexSmallerNeighbors[xi]:
+            lord_j = order[j]
+            xj = all_lords[lord_j] #lord_j = xj.id
+
+            if xj in xi.out:
+                weights[lord_j] -= weights[lord_i]
+                if weights[lord_j] < 0: weights[lord_j] = 0
+        
+        weights[lord_i] = 0
+            
+    blue_colored_lords = set()
+
+    for i in range(n-1,-1,-1):
+
+        xi = all_lords[order[i]]
+
+        if xi.color == RED:
+            flag = True
+            for xj in xi.out:
+                if xj.color == BLUE:
+                    flag = False
+                    break
+            if flag:
+                xi.color = BLUE
+                blue_colored_lords.add(xi)
 
     result = 0
-    for clique in cliques:
-        pres = 0
-        list_of_lords = list(clique)
-        for i in list_of_lords:
-            pres += all_lords_roads[i][1]
-        result = max(result, pres)
+    for lord in blue_colored_lords:
+        result += lord.strength
     return result
+
+
 
 # A = solve(6,[
 #     (1, 2, 4),
