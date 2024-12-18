@@ -144,6 +144,7 @@ def get_all_lords(lords:int, kingsroad:list[Vertex], V:int) -> dict[int, Lord]:
         lord_strength = sum_strength(lord_road)
         lord_castles = get_vertices(lord_road)
         all_lords[i+1] = Lord(i+1,lord_castles, lord_road, lord_strength)
+
     return all_lords
 
 def get_independet_max_weighted_set(graph:dict[int, Lord], V:int) -> set:
@@ -173,6 +174,7 @@ def get_independet_max_weighted_set(graph:dict[int, Lord], V:int) -> set:
         weights[lord_i] = 0
             
     blue_colored_set = set()
+    sum_blue = 0
 
     for i in range(V-1,-1,-1):
         lord_i = order[i]
@@ -186,19 +188,25 @@ def get_independet_max_weighted_set(graph:dict[int, Lord], V:int) -> set:
                     break
             if flag:
                 colors[lord_i] = BLUE
+                sum_blue += xi.strength
                 blue_colored_set.add(lord_i)
 
-    return blue_colored_set
+    return blue_colored_set, sum_blue
 
 def add_colliding_neighbours_to_lords(all_lords, n):
-    for i in range(1,n+1):
-        for j in range(1,n+1):
-            if i == j: continue
-            edges_a, vertices_a = all_lords[i].road, all_lords[i].castles
-            edges_b, vertices_b  = all_lords[j].road, all_lords[j].castles
-            if (edges_a & edges_b != set()) or (vertices_a & vertices_b != set()):
-                all_lords[i].out.add(all_lords[j])
-                all_lords[j].out.add(all_lords[i])
+    vert_map = {}
+    for i in range(1, n+1):
+        for vert in all_lords[i].castles:
+            if vert not in vert_map:
+                vert_map[vert] = []
+            vert_map[vert].append(all_lords[i])
+
+    for vert, lords in vert_map.items():
+        for lord_a in lords:
+            for lord_b in lords:
+                if lord_a != lord_b:
+                    lord_a.out.add(lord_b)
+                    lord_b.out.add(lord_a)
 
 def solve(N, streets, lords):
     kingsroad = kruskal((N,streets))
@@ -209,27 +217,8 @@ def solve(N, streets, lords):
 
     add_colliding_neighbours_to_lords(all_lords, n)
 
-    blue_colored_lords_ids = get_independet_max_weighted_set(all_lords, n)
+    _blue_colored_lords_ids, result = get_independet_max_weighted_set(all_lords, n)
 
-    result = 0
-    for lord_i in blue_colored_lords_ids:
-        result += all_lords[lord_i].strength
     return result
 
-
-
-# A = solve(6,[
-#     (1, 2, 4),
-#     (2, 3, 5),
-#     (3, 4, 6),
-#     (4, 5, 8),
-#     (5, 6, 7),
-#     (1, 6, 9),
-#     (2, 5, 10),
-#   ],[
-#     [1, 3],
-#     [2, 5],
-#     [4, 6],
-#   ])
-# print(A)
 runtests(solve)
