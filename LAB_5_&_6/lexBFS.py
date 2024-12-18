@@ -1,4 +1,3 @@
-
 class Node:
   def __init__(self, idx):
     self.idx = idx
@@ -16,38 +15,34 @@ def make_graph(V,L):
     
 	return G
 
-def LexBFS(G):
-    n = len(G)
-    lex_order = []
-    S = [set()]
+def LexBFS(G:list[Node], start:int = 1):
+	n = len(G)
+	lex_order = []
+	S = set(range(1,n))
+	S.remove(start)
 
-    for u in range(1,n):
-        S[0].add(u)
-    
-    def divide_sets(S:list[set], vertex:Node, G:list[Node]):
-        n = len(S)
+	considered_sets = [S, {start}]
+
+	while considered_sets:
+		vertex = next(iter(considered_sets[-1]))
+		considered_sets[-1].remove(vertex)
         
-        for i in range(n):
-            current_set = S[i]
+		if not considered_sets[-1]: considered_sets.pop()
+        
+		neighbours = G[vertex].out
+		lex_order.append(vertex)
+        
+		new_considered_sets = []
+        
+		for single_set in considered_sets:
+			Y = single_set.intersection(neighbours)
+			K = single_set - Y
+			if K: new_considered_sets.append(K)
+			if Y: new_considered_sets.append(Y)
             
-            N = G[vertex].out
+		considered_sets = new_considered_sets
 
-            X = current_set.difference(N)
-            Y = current_set.intersection(N)
-            
-            if bool(X) and bool(Y):
-                S[i] = X
-                S.insert(i+1, Y)
-            elif bool(X) and (not bool(Y)): S[i] = X
-            elif (not bool(X)) and bool(Y): S[i] = Y
-    
-    while S:
-        u = S[-1].pop()
-        lex_order.append(u)
-        divide_sets(S, u, G)
-        if not bool(S[-1]): S.pop()
-    
-    return lex_order
+	return lex_order
             
 def checkLexBFS(G, vs):
   n = len(G)
