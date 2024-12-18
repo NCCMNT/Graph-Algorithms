@@ -216,6 +216,8 @@ def solve(N, streets, lords):
         result += all_lords[lord_i].strength
     return result
 
+
+
 # A = solve(6,[
 #     (1, 2, 4),
 #     (2, 3, 5),
