@@ -56,37 +56,23 @@ def make_graph(V,L):
 	return G
 
 class Lord:
-    def __init__(self, id, castles, road, strength):
+    def __init__(self, id, castles, strength):
         self.castles = castles
         self.id = id
-        self.road = road
         self.strength = strength
         self.color = None
         self.out = set()
 
 def find_lords_road(lord:list, G:list[Vertex]):
 
-    def DFS(start, end, G:list[Vertex]):
-        V = len(G) - 1
-        visited = [False] * (V+1)
-        stack = [(start, [])]
-        
-        while stack:
-            u, path = stack.pop()
-            if not visited[u]:
-                visited[u] = True
-                if u == end: return path
-                for v, w in G[u].out:
-                    if not visited[v]:
-                        stack.append((v, path + [(min(u,v),max(u,v),w)]))
-            
-        return None
+    def DFS(start, G:list[Vertex]):
+        pass
 
-    n = len(lord)
-    road = set()
-    for i in range(n-1):
-        road.update(DFS(lord[i], lord[i+1], G))
-    return road
+    castles_protected_by_lord = None
+    lord_strength = None
+    return lord_strength, castles_protected_by_lord
+    
+    
 
 def sum_strength(road):
     return sum(w for _,_,w in road)
@@ -140,10 +126,8 @@ def get_all_lords(lords:int, kingsroad:list[Vertex], V:int) -> dict[int, Lord]:
     all_lords = {}
     for i in range(V):
         lord = lords[i]
-        lord_road = find_lords_road(lord, kingsroad)
-        lord_strength = sum_strength(lord_road)
-        lord_castles = get_vertices(lord_road)
-        all_lords[i+1] = Lord(i+1,lord_castles, lord_road, lord_strength)
+        lord_strength, lord_castles = find_lords_road(lord, kingsroad)
+        all_lords[i+1] = Lord(i+1,lord_castles, lord_strength)
 
     return all_lords
 
