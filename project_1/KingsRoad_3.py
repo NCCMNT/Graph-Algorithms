@@ -1,4 +1,6 @@
 from data import runtests
+import sys
+sys.setrecursionlimit(10000)
 
 class Node:
     def __init__(self,value):
@@ -64,21 +66,38 @@ class Lord:
         self.out = set()
 
 def find_lords_road(lord:list, G:list[Vertex]):
+    V = len(G)
 
-    def DFS(start, G:list[Vertex]):
-        pass
+    castles_protected_by_lord = set()
+    lord_strength = 0
 
-    castles_protected_by_lord = None
-    lord_strength = None
+    visited = [False] * (V+1)
+
+    def DFS(G:list[Vertex], u):
+        nonlocal castles_protected_by_lord, lord_strength
+
+        vertex_is_under_lords_protection = False
+        visited[u] = True
+
+        for v,w in G[u].out:
+            if not visited[v] and DFS(G, v):
+                vertex_is_under_lords_protection = True
+                lord_strength += w
+
+        if u in lord:
+            vertex_is_under_lords_protection = True
+
+        if vertex_is_under_lords_protection: 
+            castles_protected_by_lord.add(u)
+
+        return vertex_is_under_lords_protection
+
+    for castle in lord:
+        if not visited[castle]:
+            castles_protected_by_lord.add(castle)
+            DFS(G, castle)
+
     return lord_strength, castles_protected_by_lord
-    
-    
-
-def sum_strength(road):
-    return sum(w for _,_,w in road)
-
-def get_vertices(road):
-    return {u for u,_,_ in road} | {v for _,v,_ in road}
 
 def lex_BFS(graph: dict[int, Lord], n ,start: int = 1):
     lex_order = []
