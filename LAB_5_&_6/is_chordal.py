@@ -20,7 +20,7 @@ def PEO(order:list, G):
 def is_chordal(A):
     V, L = A
     G = make_graph(V,L)
-
     return int(PEO(LexBFS(G), G))
+
 if __name__ == '__main__':
     run_tests(4, is_chordal, graph_converter='raw', subdir='chordal')
