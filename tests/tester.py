@@ -1,7 +1,7 @@
 from .dimacs import *
 import os, time
 
-def run_tests(test_num, function, directed = False, graph_converter = 'list', runall = True, without = [], subdir = ''):
+def run_tests(test_num, function, directed = False, graph_converter = 'list', runall = True, without = [], subdir = '', otherdir = None):
     def prRed(skk): print("\033[91m {}\033[00m" .format(skk))
     def prGreen(skk): print("\033[92m {}\033[00m" .format(skk))
 
@@ -9,6 +9,7 @@ def run_tests(test_num, function, directed = False, graph_converter = 'list', ru
     start_time = time.monotonic()
     
     directory = rf'{os.path.dirname(os.path.abspath(__file__))}/graphs-lab{test_num}/{subdir}'
+    if otherdir: directory = rf'{os.path.dirname(os.path.abspath(__file__))}/{otherdir}'
     all_files = os.listdir(directory)
     if not runall: all_files = all_files[:5]
 
