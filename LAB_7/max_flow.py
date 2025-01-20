@@ -4,7 +4,6 @@ from tests.tester import run_tests
 def max_flow(A):
     V, L = A
     G = nx.DiGraph()
-    G.add_nodes_from( [i for i in range(1, V+1)] )
     for u, v, w in L:
         G.add_edge(u,v, capacity = w)
 
