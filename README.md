@@ -4,7 +4,7 @@ For usage of custom made tester for this repository it is needed to configure fe
 - Setup python virtual environment:
 
    - Enter working directory where this repository was cloned
-   - For Linux in comand line type:
+   - For Linux in command line type:
      ```
      python3 -m venv venv
      ```
