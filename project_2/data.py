@@ -265,7 +265,8 @@ problems = [
 ]
 
 # problems = [problems[-1]]
-
+def prRed(skk): print("\033[91m {}\033[00m" .format(skk))
+def prGreen(skk): print("\033[92m {}\033[00m" .format(skk))
 
 def printarg(N, M, holes, pieces):
     print(f"{N} x {M}, {len(holes)} dziur, {len(pieces)} figur")
@@ -278,10 +279,10 @@ def printsol(sol):
 
 def check(N, M, holes, pieces, hint, sol):
     if hint == sol:
-        print("Test zaliczony")
+        prGreen("Test zaliczony")
         return True
     else:
-        print("NIEZALICZONY!")
+        prRed("NIEZALICZONY!")
         print(f"got {sol}, wanted {hint}")
         return False
 
