@@ -3,7 +3,6 @@ from data import runtests
 class Board:
     def __init__(self, pieces_position : frozenset[tuple [str, int, int]]):
         self.pieces_positions = pieces_position
-        self.is_winning = None
         self.out = set()
     
     def __eq__(self, other):
@@ -27,8 +26,9 @@ def my_solve(N, M, holes, pieces):
             for dx, dy in directions[piece]:
                 nx, ny = x + dx, y + dy
                 while 1 <= nx <= N and 1 <= ny <= M and (nx, ny) not in holes:
-                    move_set.append((nx, ny))
-                    if piece in "kn":
+                    if (nx, ny) not in other_pieces:
+                        move_set.append((nx, ny))
+                    if piece in "kn":  
                         break
                     nx += dx
                     ny += dy
@@ -36,7 +36,7 @@ def my_solve(N, M, holes, pieces):
             move_set.extend(get_move_set("r", x, y, other_pieces))
             move_set.extend(get_move_set("b", x, y, other_pieces))
         
-        return [pos for pos in move_set if pos not in other_pieces]
+        return move_set
     
     def get_possible_boards(board : Board) -> set[Board]:
         possible_boards = set()
@@ -46,41 +46,73 @@ def my_solve(N, M, holes, pieces):
             move_set = get_move_set(piece, x, y, other_pices)
 
             for nx, ny in move_set:
-                new_pieces_positions = set(board.pieces_positions)
-                new_pieces_positions.remove((piece, x, y))
-                new_pieces_positions.add((piece, nx, ny))
-                possible_boards.add(Board(frozenset(new_pieces_positions)))
+                new_pieces_positions = board.pieces_positions - {(piece, x, y)} | {(piece, nx, ny)}
+                # new_pieces_positions = set(board.pieces_positions)
+                # new_pieces_positions.remove((piece, x, y))
+                # new_pieces_positions.add((piece, nx, ny))
+                new_board = Board(frozenset(new_pieces_positions))
+                possible_boards.add(new_board)
         
         return possible_boards
     
-    import sys
-    sys.setrecursionlimit(10**6)
+    from collections import deque
+
+    def make_graph(init_b):
+        G = {}
+        visited = set()
+
+        Q = deque([init_b])
+        G[init_b.pieces_positions] = init_b
+
+        while Q:
+            considered_board = Q.popleft()
+
+            if considered_board in visited:
+                continue
+
+            visited.add(considered_board)
+
+            neighbours = get_possible_boards(considered_board)
+            considered_board.out = set()
+
+            for neighbour in neighbours:
+                if neighbour.pieces_positions in G:
+                    neighbour = G[neighbour.pieces_positions]
+                else:
+                    G[neighbour.pieces_positions] = neighbour
+
+                considered_board.out.add(neighbour)
+                Q.append(neighbour)
+        
+        return G
+    
+    def find_longest_path(s):
+
+        def dfs(node, visited):
+            if node in visited:
+                return 0
+
+            visited.add(node)
+            max_length = 0
+
+            for neighbor in node.out:
+                max_length = max(max_length, 1 + dfs(neighbor, visited))
+
+            visited.remove(node)
+            return max_length
+        
+        longest_path = dfs(s, set())
+        return longest_path
     
     holes = set(holes)
     pieces = set(pieces)
     initial_board = Board(frozenset(pieces))
-    boards = [initial_board]
+    G = make_graph(initial_board)
+    # print(G)
+    return max((find_longest_path(initial_board) - 1), 0) % 2 == 1
 
-    result = False
-
-    def DFS_boards(boards, player : bool):
-        nonlocal result
-        if result: return result
-        
-        possible_boards = get_possible_boards(boards[-1])
-        possible_boards = list(filter(lambda x: x not in boards, possible_boards))
-
-        if not possible_boards:
-            result = not player
-            return result
-        
-        for new_board in possible_boards:
-            if result: break
-
-            if new_board not in boards:
-                DFS_boards(boards + [new_board], not player)
-
-    DFS_boards(boards, True)
-    return result
+# print(my_solve(2, 5,
+#   [(2, 1), (2, 3), (2, 4), (2, 5)],
+#   [("k", 2, 2)]))
 
 runtests(my_solve)
