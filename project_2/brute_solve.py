@@ -81,7 +81,44 @@ def my_solve(N, M, holes, pieces):
 
         return board.is_winning
     
+    # from collections import deque
+
+    # def BFS(board: Board):
+    #     Q = deque()
+    #     Q.append((board, set([board])))
+    #     visited = set()
+    #     visited.add(board)
+        
+    #     while Q:
+    #         current_board, banned = Q.popleft()
+    #         possible_boards = get_possible_boards(current_board)
+    #         possible_boards = [b for b in possible_boards if b not in banned]
+            
+    #         if not possible_boards:
+    #             current_board.is_winning = False
+    #             continue
+            
+    #         current_board.out.update(possible_boards)
+
+    #         for new_board in possible_boards:
+    #             if new_board not in visited:
+    #                 visited.add(new_board)
+    #                 new_banned = banned.copy()  # Create a COPY of the banned set
+    #                 new_banned.add(new_board)
+    #                 Q.append((new_board, new_banned))
+            
+    #         if any(not n.is_winning for n in current_board.out):
+    #             current_board.is_winning = True
+    #         else:
+    #             current_board.is_winning = False
+        
+    #     return board.is_winning
+
     b = set()
     b.add(initial_board)
 
+    # return BFS(initial_board)
     return DFS(initial_board, b)
+
+
+runtests(my_solve)
