@@ -1,79 +1,110 @@
 from data import runtests
 from collections import deque
 
-def max_matching(G):
+def max_matching(G : list[list]) -> int:
+    """Edmonds blossom algorithm finds max matching in graph G represented as adjecency list"""
 
-    def lca(match, base, p, a, b):
-        used = [False] * len(match)
+    def LCA(matching, blossom_base, parent, u, v):
+        n = len(matching)
+        visited = [False] * n
+
         while True:
-            a = base[a]
-            used[a] = True
-            if match[a] == -1:
+            # traverse upward through parents until the base of u is found
+            u = blossom_base[u]
+            visited[u] = True
+            if matching[u] == -1:
                 break
-            a = p[match[a]]
+            u = parent[matching[u]]
+
         while True:
-            b = base[b]
-            if used[b]:
-                return b
-            b = p[match[b]]
+            # traverse upward until the base of v is found
+            v = blossom_base[v]
+            if visited[v]:
+                return v
+            v = parent[matching[v]]
 
-    # Mark the path from v to the base of the blossom
-    def mark_path(match, base, blossom, p, v, b, children):
-        while base[v] != b:
-            blossom[base[v]] = blossom[base[match[v]]] = True
-            p[v] = children
-            children = match[v]
-            v = p[match[v]]
+    def mark_blossom_vertices(matching, blossom_base, blossom, parent, v, lca, child):
 
-    def find_path(graph, match, p, root):
-        n = len(graph)
-        used = [False] * n
-        p[:] = [-1] * n
-        base = list(range(n))
-        used[root] = True
-        Q = deque([root])
+        while blossom_base[v] != lca:
+
+            # both v and its matching belongs to the blossom
+            blossom[blossom_base[v]] = blossom[blossom_base[matching[v]]] = True
+
+            parent[v] = child
+            child = matching[v]
+
+            v = parent[matching[v]]
+
+    def find_aumenting_path(G, matching, parent, s):
+        n = len(G)
+
+        visited = [False] * n
+        visited[s] = True
+
+        parent[:] = [-1] * n
+        blossom_base = list(range(n))
+
+        Q = deque([s])
 
         while Q:
-            v = Q.popleft()
-            for to in graph[v]:
-                if base[v] == base[to] or match[v] == to:
+
+            u = Q.popleft()
+
+            for v in G[u]:
+
+                # ignore if vertices are matched or have the same blossom base
+                if blossom_base[u] == blossom_base[v] or matching[u] == v:
                     continue
-                if to == root or (match[to] != -1 and p[match[to]] != -1):
-                    curbase = lca(match, base, p, v, to)
+                
+                if v == s or (matching[v] != -1 and parent[matching[v]] != -1):
+                    lca = LCA(matching, blossom_base, parent, u, v) # find lowest common ancestor for u and v
                     blossom = [False] * n
-                    mark_path(match, base, blossom, p, v, curbase, to)
-                    mark_path(match, base, blossom, p, to, curbase, v)
+
+                    mark_blossom_vertices(matching, blossom_base, blossom, parent, u, lca, v)
+                    mark_blossom_vertices(matching, blossom_base, blossom, parent, v, lca, u)
+
                     for i in range(n):
-                        if blossom[base[i]]:
-                            base[i] = curbase
-                            if not used[i]:
-                                used[i] = True
+
+                        if blossom[blossom_base[i]]:
+                            blossom_base[i] = lca
+
+                            if not visited[i]:
+                                visited[i] = True
                                 Q.append(i)
-                elif p[to] == -1:
-                    p[to] = v
-                    if match[to] == -1:
-                        return to
-                    to = match[to]
-                    used[to] = True
-                    Q.append(to)
+
+                elif parent[v] == -1:
+                    # assign BFS parent
+                    parent[v] = u
+
+                    if matching[v] == -1:
+                        return v
+                    
+                    v = matching[v]
+                    visited[v] = True
+                    Q.append(v)
         return -1
 
-    # Implementation of Blossom Algorithm
-    def get_max_matching(graph):
-        n = len(graph)
-        match = [-1] * n
-        p = [0] * n
+    def get_max_matching(G):
+        n = len(G)
+
+        matching = [-1] * n
+        parent = [None] * n
+
         for i in range(n):
-            if match[i] == -1:
-                v = find_path(graph, match, p, i)
+            if matching[i] == -1:
+
+                v = find_aumenting_path(G, matching, parent, i)
+                
                 while v != -1:
-                    pv = p[v]
-                    ppv = match[pv]
-                    match[v] = pv
-                    match[pv] = v
-                    v = ppv
-        # Returns number of pairs in graph
-        return sum(1 for x in match if x != -1) // 2
+                    # if augmenting path is found then swap matchings in it
+                    parent_v = parent[v]
+                    parent_v_match = matching[parent_v]
+
+                    matching[v], matching[parent_v] = parent_v, v
+
+                    v = parent_v_match
+
+        return sum(1 for x in matching if x != -1) // 2
 
     return get_max_matching(G)
 
@@ -161,9 +192,8 @@ def my_solve(N, M, holes, pieces):
 
                 E.add((considered_board.id, G[neighbour.pieces_positions].id))
 
-                # considered_board.out.add(neighbour)
-                if neighbour not in visited:
-                    Q.append(neighbour)
+                # if neighbour not in visited:
+                Q.append(neighbour)
         
         return E
     
@@ -193,8 +223,6 @@ def my_solve(N, M, holes, pieces):
 
     mm = max_matching(G)
     mm2 = max_matching(G2)
-    print(mm)
-    print(mm2)
 
     return  mm != mm2
 
