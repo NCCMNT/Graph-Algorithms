@@ -1,5 +1,4 @@
 # Graph-Algorithms
-## PRACTICE & EXERCISES from 2nd year of studies in AGH Univeristy of Cracow
 For usage of custom made tester for this repository it is needed to configure few things:
 - Setup python virtual environment:
 
